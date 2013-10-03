@@ -50,7 +50,6 @@ sub install_meta {
 
     my $stash = get_stash_for($name);
     $stash->add_symbol('$METACLASS', \$meta);
-    mro::set_mro($name, 'mop');
 }
 
 sub finalize_meta {
@@ -70,6 +69,33 @@ sub finalize_meta {
 
     my $stash = mop::internals::util::get_stash_for($meta->name);
     $stash->add_symbol('$VERSION', \$meta->version);
+
+    $stash->add_symbol('@ISA', [$meta->superclass])
+        if $meta->can('superclass') && defined $meta->superclass;
+
+    if ($mop::BOOTSTRAPPED) {
+        for my $method ($meta->methods) {
+            $stash->add_symbol(
+                '&' . $method->name,
+                sub { $method->execute(shift, \@_) }
+            );
+        }
+
+        if ($meta->can('submethods')) {
+            my $name = $meta->name;
+            for my $method ($meta->submethods) {
+                $stash->add_symbol(
+                    '&' . $method->name,
+                    sub {
+                        my $self = shift;
+                        return $self->next::method(@_)
+                            if (ref($self) || $self) ne $name;
+                        $method->execute($self, \@_);
+                    }
+                );
+            }
+        }
+    }
 
     $meta->fire('after:FINALIZE');
 }
@@ -216,15 +242,12 @@ sub inflate_meta {
     die "Multiple inheritance is not supported in mop classes"
         if @$isa > 1;
 
-    # can't use the mop mro for non-mop classes, it confuses things like SUPER
-    my $mro = mro::get_mro($name);
     my $new_meta = mop::class->new(
         name       => $name,
         version    => $version,
         authority  => $authority,
         superclass => $isa->[0],
     );
-    mro::set_mro($name, $mro);
 
     for my $method ($stash->list_all_symbols('CODE')) {
         $new_meta->add_method(

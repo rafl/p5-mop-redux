@@ -195,7 +195,6 @@ sub namespace_parser {
     );
     my $g = guard {
         mop::remove_meta($pkg);
-        mro::set_mro($pkg, 'dfs');
     };
 
     my $preamble = '{'
@@ -273,7 +272,7 @@ sub submethod {
     my ($name, $body, @traits) = @_;
 
     syntax_error("submethods are not supported in roles")
-        if ${^META}->isa('mop::role');
+        unless ${^META}->isa('mop::class');
 
     ${^META}->add_submethod(
         ${^META}->submethod_class->new(
