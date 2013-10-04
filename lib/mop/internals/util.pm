@@ -129,74 +129,6 @@ sub apply_all_roles {
     $to->fire('after:CONSUME' => $composite);
 }
 
-sub close_class {
-    my ($class) = @_;
-
-    my $new_meta = get_class_for_closing($class);
-
-    # XXX clear caches here if we end up adding any, and if we end up
-    # implementing reopening of classes
-
-    bless $class, $new_meta->name;
-}
-
-sub get_class_for_closing {
-    my ($class) = @_;
-
-    my $class_meta = mop::find_meta($class);
-
-    my $closed_name = 'mop::closed::' . $class_meta->name;
-
-    my $new_meta = mop::find_meta($closed_name);
-    return $new_meta if $new_meta;
-
-    $new_meta = mop::find_meta($class_meta)->new_instance(
-        name       => $closed_name,
-        version    => $class_meta->version,
-        superclass => $class_meta->name,
-        roles      => [],
-    );
-
-    my @mutator_methods = qw(
-        add_role
-        add_attribute
-        add_method
-        add_required_method
-        remove_required_method
-        make_class_abstract
-        set_instance_generator
-    );
-
-    for my $method (@mutator_methods) {
-        $new_meta->add_method(
-            $new_meta->method_class->new(
-                name => $method,
-                body => sub { die "Can't call $method on a closed class" },
-            )
-        );
-    }
-
-    $new_meta->add_method(
-        $new_meta->method_class->new(
-            name => 'is_closed',
-            body => sub { 1 },
-        )
-    );
-
-    $new_meta->FINALIZE;
-
-    my $stash = get_stash_for($class->name);
-    for my $isa (@{ mop::mro::get_linear_isa($class->name) }) {
-        if (mop::has_meta($isa)) {
-            for my $method (mop::find_meta($isa)->methods) {
-                $stash->add_symbol('&' . $method->name => $method->body);
-            }
-        }
-    }
-
-    return $new_meta;
-}
-
 # this shouldn't be used, generally. the only case where this is necessary is
 # when we have a class which doesn't use the mop inheriting from a class which
 # does. in that case, we need to inflate a basic metaclass for that class in
@@ -253,14 +185,6 @@ sub fix_metaclass_compatibility {
 
     my $super_name = Scalar::Util::blessed($super) // $super;
 
-    # immutability is on a per-class basis, it shouldn't be inherited.
-    # otherwise, subclasses of closed classes won't be able to do things
-    # like add attributes or methods to themselves
-    $meta_name = mop::find_meta($meta_name)->superclass
-        if $meta_name->isa('mop::class') && $meta_name->is_closed;
-    $super_name = mop::find_meta($super_name)->superclass
-        if $super_name->isa('mop::class') && $super_name->is_closed;
-
     return $meta_name  if $meta_name->isa($super_name);
     return $super_name if $super_name->isa($meta_name);
 
@@ -316,7 +240,6 @@ sub rebase_metaclasses {
                 name       => $rebased,
                 superclass => $current,
             );
-            mop::traits::closed($clone);
             $clone->FINALIZE;
         }
         $current = $rebased;
