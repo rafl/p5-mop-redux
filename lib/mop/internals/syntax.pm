@@ -18,7 +18,6 @@ use Parse::Keyword {
     class     => \&namespace_parser,
     role      => \&namespace_parser,
     method    => \&generic_method_parser,
-    submethod => \&generic_method_parser,
     has       => \&has_parser,
 };
 
@@ -93,7 +92,6 @@ sub setup_for {
         *{ $pkg . '::class'     } = \&class;
         *{ $pkg . '::role'      } = \&role;
         *{ $pkg . '::method'    } = \&method;
-        *{ $pkg . '::submethod' } = \&submethod;
         *{ $pkg . '::has'       } = \&has;
     }
 }
@@ -266,22 +264,6 @@ sub method {
     }
 
     run_traits(${^META}->get_method($name), @traits);
-}
-
-sub submethod {
-    my ($name, $body, @traits) = @_;
-
-    syntax_error("submethods are not supported in roles")
-        unless ${^META}->isa('mop::class');
-
-    ${^META}->add_submethod(
-        ${^META}->submethod_class->new(
-            name => $name,
-            body => Sub::Name::subname((join '::' => $CURRENT_CLASS_NAME, $name), $body),
-        )
-    );
-
-    run_traits(${^META}->get_submethod($name), @traits);
 }
 
 sub generic_method_parser {

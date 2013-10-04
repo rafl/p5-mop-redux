@@ -23,7 +23,7 @@ use mop;
 class App extends My::Component is extending_non_mop {
     has $!foo;
 
-    submethod BUILD (%args) {
+    method BUILD (%args) {
         $!foo = $args{'foo'};
     }
 

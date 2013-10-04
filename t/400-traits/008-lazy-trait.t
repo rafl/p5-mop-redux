@@ -21,7 +21,7 @@ class Foo {
         $_->bar * 2
     };
 
-    submethod _build_bar {
+    method _build_bar {
         $!bar_touched++;
         $!foo * 5;
     }

@@ -45,7 +45,7 @@ sub unimport {
     my $pkg = caller;
     mop::internals::util::get_stash_for($pkg)->remove_glob($_)
         for (
-            qw(class role method submethod has),
+            qw(class role method has),
             @mop::traits::AVAILABLE_TRAITS
         );
 }
@@ -445,7 +445,6 @@ This is a prototype for a new object system for Perl 5.
     # you would expect
     class mop::class extends mop::object with mop::role {
         has $!superclass is ro;
-        has $!submethods = {};
         has $!is_abstract is ro;
         has $!instance_generator is ro = sub { \(my $anon) };
 
@@ -458,15 +457,6 @@ This is a prototype for a new object system for Perl 5.
 
         method set_instance_generator ($generator) { ... }
         method create_fresh_instance_structure { ... }
-
-        method submethod_class { 'mop::method' }
-
-        method submethods { ... }
-        method submethod_map { ... }
-
-        method add_submethod ($attr) { ... }
-        method get_submethod ($name) { ... }
-        method has_submethod ($name) { ... }
     }
 
 =head1 BOOTSTRAPPING GOALS

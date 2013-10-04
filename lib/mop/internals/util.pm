@@ -80,21 +80,6 @@ sub finalize_meta {
                 sub { $method->execute(shift, \@_) }
             );
         }
-
-        if ($meta->can('submethods')) {
-            my $name = $meta->name;
-            for my $method ($meta->submethods) {
-                $stash->add_symbol(
-                    '&' . $method->name,
-                    sub {
-                        my $self = shift;
-                        return $self->next::method(@_)
-                            if (ref($self) || $self) ne $name;
-                        $method->execute($self, \@_);
-                    }
-                );
-            }
-        }
     }
 
     $meta->fire('after:FINALIZE');
@@ -180,7 +165,6 @@ sub get_class_for_closing {
         remove_required_method
         make_class_abstract
         set_instance_generator
-        add_submethod
     );
 
     for my $method (@mutator_methods) {
