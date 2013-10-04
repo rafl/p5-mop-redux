@@ -35,7 +35,7 @@ sub BUILD {
 
     mop::internals::util::install_meta($self);
 
-    if ($self->superclass && (my $meta = mop::find_meta($self->superclass))) {
+    if ($self->superclass && (my $meta = mop::meta($self->superclass))) {
         $self->set_instance_generator($meta->instance_generator);
 
         # merge required methods with superclass
@@ -75,7 +75,7 @@ sub new_instance {
     mop::internals::util::register_object($instance);
 
     my %attributes = map {
-        if (my $m = mop::find_meta($_)) {
+        if (my $m = mop::meta($_)) {
             %{ $m->attribute_map }
         }
     } reverse @{ mop::mro::get_linear_isa($self->name) };
@@ -99,7 +99,7 @@ sub clone_instance {
 
     my $attributes = {
         map {
-            if (my $m = mop::find_meta($_)) {
+            if (my $m = mop::meta($_)) {
                 %{ $m->attribute_map }
             }
         } reverse @{ mop::mro::get_linear_isa($self->name) }
@@ -135,7 +135,7 @@ sub add_method {
 
     my @super_methods = (
         map { $_ ? $_->get_method($method->name) : undef }
-        map { mop::find_meta($_) }
+        map { mop::meta($_) }
         @{ mop::mro::get_linear_isa($self->name) }
     );
     shift @super_methods;
