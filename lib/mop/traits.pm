@@ -3,6 +3,8 @@ package mop::traits;
 use v5.16;
 use warnings;
 
+use overload ();
+
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
