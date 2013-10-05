@@ -71,7 +71,6 @@ is_deeply($foo->foo, [ 2, 3, 4, 10 ], '... got the value we expected');
 eval q{
     use mop;
     class Bar {
-        has $!foo;
         method bar { $!baz }
     }
 };

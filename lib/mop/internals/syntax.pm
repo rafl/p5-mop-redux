@@ -12,7 +12,7 @@ use Scalar::Util    ();
 use Sub::Name       ();
 use Module::Runtime ();
 use version         ();
-use twigils 0.03    ();
+use twigils 0.04    ();
 
 use Parse::Keyword {
     class     => \&namespace_parser,
@@ -309,7 +309,7 @@ sub generic_method_parser {
            . '$class = shift(@_);'
         . '}'
         . 'local ${^CALLER} = [ $self, q[' . $name . '], $' . $CURRENT_CLASS_NAME . '::METACLASS ];'
-        . 'use twigils "fatal_lookup_errors";';
+        . 'use twigils "fatal_lookup_errors", allowed_twigils => "!.";';
 
     # this is our method preamble, it
     # basically creates a method local
