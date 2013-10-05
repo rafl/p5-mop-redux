@@ -68,4 +68,14 @@ push @$x => 10;
 is_deeply($x, [ 2, 3, 4, 10 ], '... got the value we expected');
 is_deeply($foo->foo, [ 2, 3, 4, 10 ], '... got the value we expected');
 
+eval q{
+    use mop;
+    class Bar {
+        has $!foo;
+        method bar { $!baz }
+    }
+};
+like $@, qr/No such twigil variable \$!baz/,
+    'useful error message for unavailable twigil vars';
+
 done_testing;
